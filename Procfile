@@ -1,1 +1,1 @@
-web: gunicorn pilllink:app
+web: gunicorn pillink:app
