@@ -66,15 +66,16 @@ def home():
 @app.get("/inquiry_answer")
 def inquiry_answer():
     try:
+        #문의사항
         corpus = (request.args.get('corpus') or "").strip()
         if not corpus:
-            return jsonify({"error": "corpus(문의사항)를 입력하세요"}), 400
+            return jsonify({"error": "문의사항을 입력하세요"}), 400
 
         #질문_대답 파일
         base_dir = os.path.dirname(os.path.abspath(__file__))
         qa_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Question_Answer.xlsx")
         if not os.path.exists(qa_path):
-            return jsonify({"error": "QA file 존재하지 않음음", "path": qa_path}), 500
+            return jsonify({"error": "QA file 존재하지 않음", "path": qa_path}), 500
         
         QA = pd.read_excel(qa_path)
         QA["question"] = QA["question"].fillna("")
@@ -106,8 +107,14 @@ def inquiry_answer():
         }
 
         if best_idx in [7,8,9]:
-            entpName = request.args.get('entpName')
+            #entpName = request.args.get('entpName')
+            
+            
             itemName = request.args.get('itemName')
+            
+            
+            
+            
             medicine_result, err = get_medicine_info(entpName,itemName)
             if medicine_result:
                 if best_idx == 7:
