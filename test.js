@@ -41,9 +41,9 @@ axios
 axios
   .get("http://127.0.0.1:3000/inquiry_answer", {
     params: {
-      corpus: "약에 대한 복용법을 알려줘", // 엑셀 9번 질문 내용
+      corpus: "칼타제산과 상호작용하는 약을 알려줘", // 엑셀 9번 질문 내용
       //entpName: "한미약품", // 업체명
-      itemName: "타이레놀", // 제품명
+      //itemName: "타이레놀", // 제품명
     },
   })
   .then((res) => {

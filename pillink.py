@@ -5,12 +5,16 @@ import numpy as np
 import requests, json
 from urllib.parse import unquote
 from sentence_transformers import SentenceTransformer, util
+import re
 
 app = Flask(__name__)
 
 #파일 위치 확인
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 print("CWD:", os.getcwd())
-print("FILE DIR:", os.path.dirname(os.path.abspath(__file__)))
+print("FILE DIR:", BASE_DIR)
+csv_path = os.path.join(BASE_DIR, "medicine_all.csv")
+medicine_all = pd.read_csv(csv_path, encoding="utf-8")
 
 #약 정보
 def get_medicine_info(entpName=None, itemName=None):
@@ -59,7 +63,7 @@ def get_medicine_info(entpName=None, itemName=None):
 #루트(확인 용도)
 @app.get("/")
 def home():
-    return "Flask Servre Testing..."
+    return "Flask Servre Testing...",200
 
 
 #질문_대답 
@@ -106,15 +110,42 @@ def inquiry_answer():
             "score": best_score
         }
 
+        #약 정보 요구
         if best_idx in [7,8,9]:
-            #entpName = request.args.get('entpName')
+            response['answer']=""
+            entpName = ""
+            itemName = ""
             
+            #조사 목록 
+            josa_list = ["은", "는", "이", "가", "과", "와", "를", "을", "에", "도", "로", "의","랑", "이랑"]
+
+            #약에 대한 단어 추출(특수문자 제거, 토큰화)
+            tokens = re.findall(r'[가-힣A-Za-z0-9]+', corpus)
+            #단순 단어 '약' 제거
+            tokens = [t for t in tokens if t != "약"]
+
+            #전처리한 단어
+            clean_tokens = []
+            for t in tokens:
+                removed = False
+                for josa in josa_list:
+                    if t.endswith(josa) and len(t) > len(josa):  #끝글자(문자 길이 고려)
+                        clean_tokens.append(t[:-len(josa)])      #조사 제거
+                        removed = True
+                        break
+                if not removed:
+                    clean_tokens.append(t)
+
+            print(clean_tokens)
+            find_medi = []
+            for token in clean_tokens:
+                find_medi.extend([name for name in medicine_all['itemName'] if token in name])
+            #find_medi = list(set(find_medi)) #최종 약물 단어 추출
+        
+            if find_medi[0]:
+                itemName=find_medi[0]
             
-            itemName = request.args.get('itemName')
-            
-            
-            
-            
+            print("itemName", itemName)
             medicine_result, err = get_medicine_info(entpName,itemName)
             if medicine_result:
                 if best_idx == 7:
@@ -123,7 +154,6 @@ def inquiry_answer():
                     response['medicine_info'] = medicine_result['부작용']
                 elif best_idx == 9:
                     response['medicine_info'] = medicine_result['상호작용']
-                print("best_idx:", best_idx, "-------------")
             else:
                 response["medicine_info"] = err or {"message": "약 정보 조회 실패"}
         
@@ -152,4 +182,3 @@ def medicine_info():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3000, debug=True)
-
