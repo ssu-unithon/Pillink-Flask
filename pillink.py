@@ -132,6 +132,7 @@ def inquiry_answer():
         #문장 유사도 평가 모델
         model_name = 'jhgan/ko-sbert-sts'
         embedder = SentenceTransformer(model_name)
+        print("2-1")
         
         #임베딩
         corpus_emb = embedder.encode(corpus, convert_to_tensor=True)
