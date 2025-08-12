@@ -107,15 +107,18 @@ def inquiry_answer():
         print("corpus",corpus)
         #질문_대답 파일
        
-        print('qa',qa)
         QA=list(qa)
         #문장 유사도 평가 모델
         print("2")
         #임베딩
-        corpus_emb = embedder.encode(corpus, convert_to_numpy=True)
-        print(2,1)
         query_emb = embedder.encode(QA, convert_to_numpy=True)
         print(2,2)
+        
+        corpus_emb = embedder.encode(corpus, convert_to_numpy=True)
+        print(2,1)
+        
+        #query_emb = embedder.encode(QA, convert_to_numpy=True)
+        #print(2,2)
 
         print("3")
         #유사도 계산
