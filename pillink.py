@@ -72,16 +72,28 @@ def home():
     return "Flask Servre Testing...",200
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
-qa_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Question_Answer.xlsx")
-if not os.path.exists(qa_path):
-    print(jsonify({"error": "QA file 존재하지 않음", "path": qa_path}), 500)
+#qa_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Question_Answer.xlsx")
+#if not os.path.exists(qa_path):
+#    print(jsonify({"error": "QA file 존재하지 않음", "path": qa_path}), 500)
 
 print("1")
-QA = pd.read_excel(qa_path)
-QA["question"] = QA["question"].fillna("")
-print(1, 2)
-QA["answer"] = QA["answer"].fillna("")
+qa={
+    '약 사진으로도 검색이 가능한가요': '네. 약의 사진을 통해 약을 분석할 수 있어요',
+    '가족이 먹는 약을 모니터링 할 수 있나요': '네. 가족들의 계정과 연동해서 확인할 수 있어요',
+    '알림 기능을 설정하는 방법': '알림기능은 설정 > 내 페이지에서 설정하실 수 있어요',
+    '가족과 정보를 연동하고 싶어': '가족 연동은 내 페이지 > 가족 설정에서 설정하실 수 있어요',
+    '비밀번호를 잊어버렸어요': '로그인 > 비밀번호 찾기를 통해 확인해보세요',
+    '비회원으로도 사용이 가능한가요': '비회원은 단순한 약 상호작용과 부작용 등과 관련된 정보는 가능합니다.',
+    '복용 기록은 어디서 보나요': '내 페이지>기록에서 캘린더를 통해 확인할 수 있어요',
+    '약 복용법에 대해 알려줘': '제품명을 알려주세요',
+    '약의 부작용에 대해 알고 싶어':'제품명을 알려주세요',
+    '약과 상호작용하는 약을 알고 싶어': '제품명을 알려주세요'
+ }
 
+#QA = pd.read_excel(qa_path)
+#QA["question"] = QA["question"].fillna("")
+print(1, 2)
+#QA["answer"] = QA["answer"].fillna("")
 print(1, 3)
 
 #질문_대답 
@@ -95,13 +107,14 @@ def inquiry_answer():
         print("corpus",corpus)
         #질문_대답 파일
        
-            
+        print('qa',qa)
+        QA=list(qa)
         #문장 유사도 평가 모델
         print("2")
         #임베딩
         corpus_emb = embedder.encode(corpus, convert_to_numpy=True)
         print(2,1)
-        query_emb = embedder.encode(QA['question'].tolist(), convert_to_numpy=True)
+        query_emb = embedder.encode(QA, convert_to_numpy=True)
         print(2,2)
 
         print("3")
@@ -118,8 +131,8 @@ def inquiry_answer():
             return jsonify({"result": "결과 없음", "score": best_score})
 
         response = {
-            "question": QA['question'].iloc[best_idx],
-            "answer": QA['answer'].iloc[best_idx],
+            "question": QA[best_idx],
+            "answer": qa[QA[best_idx]],
             "score": best_score
         }
 
