@@ -54,12 +54,9 @@ axios
   });
 */
 axios
-  .post(
-    "https://port-0-pillink-flask-me70nmhbc3886b97.sel5.cloudtype.app/ingredient_risk",
-    {
-      ingredients: ["메토트렉세이트", "아스피린", "아스피린"],
-    }
-  )
+  .post("http://0.0.0.0:5000//ingredient_risk", {
+    ingredients: ["메토트렉세이트", "아스피린", "아스피린"],
+  })
   .then((res) => console.log("응답:", res.data))
   .catch((err) => {
     if (err.response) {

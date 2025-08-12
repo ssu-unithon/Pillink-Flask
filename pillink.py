@@ -141,10 +141,13 @@ def inquiry_answer():
         #corpus_emb = embedder.encode(corpus, convert_to_tensor=True)
         #query_emb = embedder.encode(QA['question'].tolist(), convert_to_tensor=True)
 
-        
+        corpus_emb = embedder.encode(corpus, convert_to_numpy=True)
+        query_emb = embedder.encode(QA['question'].tolist(), convert_to_numpy=True)
+
+
         #유사도 계산
         #cos_scores = util.pytorch_cos_sim(query_emb, corpus_emb).cpu().numpy().ravel()
-
+        '''
         corpus_vec = embedder.encode(
             [corpus],
             convert_to_numpy=True,
@@ -160,9 +163,10 @@ def inquiry_answer():
             batch_size=16,
             show_progress_bar=False
         )
-
+'''
         # 정규화되어 있으니 코사인 유사도 = 내적
         cos_scores = query_vecs @ corpus_vec
+        
         print("3")
         
         #최상위 1개
