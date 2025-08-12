@@ -25,14 +25,20 @@ log_path = os.path.join(BASE_DIR, "app.log")
 # 로거 설정
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+if logger:
+    print("logger 설정")
 
 # 파일 핸들러 (10MB 이상이면 백업하고 새 파일 생성, 최대 5개 유지)
 file_handler = RotatingFileHandler(log_path, maxBytes=10*1024*1024, backupCount=5, encoding='utf-8')
 file_handler.setLevel(logging.DEBUG)
+if file_handler:
+    print("handler 존재함")
 
 # 콘솔 핸들러
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.DEBUG)
+if console_handler:
+    print("console_handler 설정됨")
 
 # 로그 포맷
 formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
@@ -269,7 +275,7 @@ def contrain_ingre(ingredient):
         })
     return cleaned, None
 
-'''
+
 #중복 성분, 충돌 성분, 위험치 지수
 @app.post('/ingredient_risk')
 def ingredient_risk():
@@ -350,8 +356,9 @@ def ingredient_risk():
         "warnings": warnings,
         "errors": errors,   # 외부 API 실패 항목이 있으면 참고용
     })
-'''
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
+    print("[LOG] >> 0.0.0.0:5000 flask start")
     app.run(host='0.0.0.0', port=port)
