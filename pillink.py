@@ -51,6 +51,8 @@ logger.addHandler(console_handler)
 
 #API 인증키
 serviceKey = unquote('0zt0FUkd5LMT9nSUvUkxnyXvIkqWli%2Bbk0ulrUNTqhSlAfcMw0a9sMwR4FrMOjdwJ8m3%2Bt9HNGzvrMv8nUB6OQ%3D%3D')
+if serviceKey:
+    print(serviceKey)
 
 #약 정보
 def get_medicine_info(entpName=None, itemName=None):
@@ -357,7 +359,7 @@ def ingredient_risk():
         "errors": errors,   # 외부 API 실패 항목이 있으면 참고용
     })
 
-
+print('complete init')
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     print("[LOG] >> 0.0.0.0:5000 flask start")
