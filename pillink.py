@@ -96,6 +96,10 @@ def get_medicine_info(entpName=None, itemName=None):
         logger.error(f"medicine_info ERROR: {repr(e)}", exc_info=True)
         return None, {"error": "server error", "detail": str(e)}
 
+@app.get("/health")
+def health():
+    return {"ok": True}, 200
+
 
 #루트(확인 용도)
 @app.get("/")
