@@ -8,6 +8,8 @@ import requests, json
 from urllib.parse import unquote
 from sentence_transformers import SentenceTransformer, util
 import re
+import logging
+from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
 CORS(app)
@@ -16,8 +18,30 @@ CORS(app)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 print("CWD:", os.getcwd())
 print("FILE DIR:", BASE_DIR)
-#csv_path = os.path.join(BASE_DIR, "medicine_all.csv")
-#medicine_all = pd.read_csv(csv_path, encoding="utf-8")
+csv_path = os.path.join(BASE_DIR, "medicine_all.csv")
+medicine_all = pd.read_csv(csv_path, encoding="utf-8")
+log_path = os.path.join(BASE_DIR, "app.log")
+
+# 로거 설정
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+# 파일 핸들러 (10MB 이상이면 백업하고 새 파일 생성, 최대 5개 유지)
+file_handler = RotatingFileHandler(log_path, maxBytes=10*1024*1024, backupCount=5, encoding='utf-8')
+file_handler.setLevel(logging.DEBUG)
+
+# 콘솔 핸들러
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+
+# 로그 포맷
+formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+file_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
+
+# 핸들러 등록
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
 
 #API 인증키
 serviceKey = unquote('0zt0FUkd5LMT9nSUvUkxnyXvIkqWli%2Bbk0ulrUNTqhSlAfcMw0a9sMwR4FrMOjdwJ8m3%2Bt9HNGzvrMv8nUB6OQ%3D%3D')
@@ -26,6 +50,7 @@ serviceKey = unquote('0zt0FUkd5LMT9nSUvUkxnyXvIkqWli%2Bbk0ulrUNTqhSlAfcMw0a9sMwR
 def get_medicine_info(entpName=None, itemName=None):
     try:
         if not entpName and not itemName:
+            logger.warning("업체명과 제품명이 입력되지 않음")
             return None, {"error": "업체명과 제품명을 입력해주세요"}
 
         url = 'http://apis.data.go.kr/1471000/DrbEasyDrugInfoService/getDrbEasyDrugList'
@@ -43,6 +68,7 @@ def get_medicine_info(entpName=None, itemName=None):
         items = (payload.get('body') or {}).get('items') or []
 
         if not items:
+            logger.info(f"검색 결과 없음: entpName={entpName}, itemName={itemName}")
             return None, {"message": "검색 결과가 없습니다."}
 
         item = items[0]
@@ -54,12 +80,12 @@ def get_medicine_info(entpName=None, itemName=None):
             '부작용': item.get('seQesitm'),
             '보관법': item.get('depositMethodQesitm')
         }
+        logger.debug(f"약 정보 조회 성공:{result}")
         return result,None
 
     #예외 처리 
     except Exception as e:
-        print("medicine_info ERROR:", repr(e))
-        traceback.print_exc()
+        logger.error(f"medicine_info ERROR: {repr(e)}", exc_info=True)
         return None, {"error": "server error", "detail": str(e)}
 
 
@@ -139,16 +165,20 @@ def inquiry_answer():
                 if not removed:
                     clean_tokens.append(t)
 
-            #print(clean_tokens)
+            print(clean_tokens,flush=True)
+            
+            
             find_medi = []
             for token in clean_tokens:
                 find_medi.extend([name for name in medicine_all['itemName'] if token in name])
             #find_medi = list(set(find_medi)) #최종 약물 단어 추출
-        
+
+            print(find_medi,flush=True)
             if find_medi[0]:
                 itemName=find_medi[0]
             
-            #print("itemName", itemName)
+            itemName=clean_tokens[0]
+            print("itemName", itemName,flush=True)
             medicine_result, err = get_medicine_info(entpName,itemName)
             if medicine_result:
                 if best_idx == 7:
@@ -181,7 +211,7 @@ def medicine_info():
         return jsonify(medicine_result)
     return jsonify(med_err), 500 if "error" in (med_err or {}) else 200
 
-'''
+
 #충돌 성분 조회
 def contrain_ingre(ingredient):
     params = {
@@ -239,7 +269,7 @@ def contrain_ingre(ingredient):
         })
     return cleaned, None
 
-
+'''
 #중복 성분, 충돌 성분, 위험치 지수
 @app.post('/ingredient_risk')
 def ingredient_risk():
