@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import os, traceback
 import pandas as pd
 import numpy as np
+from collections import Counter
 import requests, json
 from urllib.parse import unquote
 from sentence_transformers import SentenceTransformer, util
@@ -16,14 +17,14 @@ print("FILE DIR:", BASE_DIR)
 csv_path = os.path.join(BASE_DIR, "medicine_all.csv")
 medicine_all = pd.read_csv(csv_path, encoding="utf-8")
 
+#API 인증키
+serviceKey = unquote('0zt0FUkd5LMT9nSUvUkxnyXvIkqWli%2Bbk0ulrUNTqhSlAfcMw0a9sMwR4FrMOjdwJ8m3%2Bt9HNGzvrMv8nUB6OQ%3D%3D')
+
 #약 정보
 def get_medicine_info(entpName=None, itemName=None):
     try:
         if not entpName and not itemName:
             return None, {"error": "업체명과 제품명을 입력해주세요"}
-
-        # 인증키
-        serviceKey = unquote('0zt0FUkd5LMT9nSUvUkxnyXvIkqWli%2Bbk0ulrUNTqhSlAfcMw0a9sMwR4FrMOjdwJ8m3%2Bt9HNGzvrMv8nUB6OQ%3D%3D')
 
         url = 'http://apis.data.go.kr/1471000/DrbEasyDrugInfoService/getDrbEasyDrugList'
         params = {
@@ -136,7 +137,7 @@ def inquiry_answer():
                 if not removed:
                     clean_tokens.append(t)
 
-            print(clean_tokens)
+            #print(clean_tokens)
             find_medi = []
             for token in clean_tokens:
                 find_medi.extend([name for name in medicine_all['itemName'] if token in name])
@@ -145,7 +146,7 @@ def inquiry_answer():
             if find_medi[0]:
                 itemName=find_medi[0]
             
-            print("itemName", itemName)
+            #print("itemName", itemName)
             medicine_result, err = get_medicine_info(entpName,itemName)
             if medicine_result:
                 if best_idx == 7:
@@ -178,6 +179,146 @@ def medicine_info():
         return jsonify(medicine_result)
     return jsonify(med_err), 500 if "error" in (med_err or {}) else 200
 
+
+#충돌 성분 조회
+def contrain_ingre(ingredient):
+    params = {
+        "serviceKey": serviceKey,
+        "pageNo": 1,
+        "numOfRows": 10,
+        "type": "json",
+        "ingrKorName": ingredient,
+    }
+
+    base_url = "http://apis.data.go.kr/1471000/DURIrdntInfoService03"
+    endpoint = "getUsjntTabooInfoList02"
+    url = f"{base_url}/{endpoint}"
+    try:
+        res = requests.get(url, params=params)
+        res.raise_for_status()
+        result=res.json()
+    except Exception as e:
+        return [], {"error": f"API 요청 실패"}
+
+    body = (j or {}).get("body") or {}
+    items = body.get("items")
+    if items is None:
+        items = body.get("item")  # 어떤 응답은 item만 있음
+
+    flat = []
+    # case 1) items: list
+    if isinstance(items, list):
+        for it in items:
+            if isinstance(it, dict) and isinstance(it.get("item"), dict):
+                flat.append(it["item"])
+            elif isinstance(it, dict):
+                flat.append(it)
+    # case 2) items: dict
+    elif isinstance(items, dict):
+        if isinstance(items.get("item"), list):
+            for it in items["item"]:
+                if isinstance(it, dict):
+                    flat.append(it)
+        elif isinstance(items.get("item"), dict):
+            flat.append(items["item"])
+        else:
+            flat.append(items)
+    else:
+        flat = []
+
+    # 필요한 필드만 얇게 추출 (키 명칭 변형 대비)
+    cleaned = []
+    for rec in flat:
+        if not isinstance(rec, dict):
+            continue
+        cleaned.append({
+            "MIXTURE_INGR_KOR_NAME": rec.get("MIXTURE_INGR_KOR_NAME") or rec.get("MIXTURE_INGR_KOR_NM"),
+            "PROHBT_CONTENT": (rec.get("PROHBT_CONTENT") or "").strip(),
+            "INGR_KOR_NAME": rec.get("INGR_KOR_NAME"),  # 디버깅용
+        })
+    return cleaned, None
+
+
+#중복 성분, 충돌 성분, 위험치 지수
+@app.post('/ingredient_risk')
+def ingredient_risk():
+    data = request.get_json(silent=True) or {}  #Body 추출
+    raw_ing = data.get("ingredients") or []     #키 값 추출(사용자 복용 약들)
+    
+    #전처리
+    ing = [str(x).strip() for x in raw_ing if str(x).strip()]
+    if not ing:
+        return jsonify({"error": "사용자의 복용 약 정보가 필요합니다"}), 400
+
+    #입력 중복(동일 성분이 2회 이상 등장)
+    cnt = Counter(ing)
+    duplicates = sorted([k for k, v in cnt.items() if v > 1])
+
+    #병용금기 충돌 성분
+    ing_set = set(ing)
+    pair_map = {} 
+    errors = []
+
+    for a in ing_set:
+        items, res = contrain_ingre(a)
+        try:
+            body = res.get("body", {})
+            items = body.get("items") or []
+            if isinstance(items, dict):
+                items = items.get("item", [])
+            if not isinstance(items, list):
+                items = []
+        except Exception as e:
+            errors.append({"ingredient": a, "error": f"응답 파싱 실패: {e}"})
+            continue
+        
+        
+        for it in items:
+            if not isinstance(it, dict):
+                continue
+            rec = it.get("item", it)
+            mix_name = rec.get("MIXTURE_INGR_KOR_NAME")
+            reason = (rec.get("PROHBT_CONTENT") or "").strip()
+            if mix_name and mix_name in ing_set and mix_name != a:
+                key = frozenset((a, mix_name))
+                if key not in pair_map:
+                    pair_map[key] = reason
+        
+
+    # 충돌 리스트로 변환
+    collisions = []
+    for key, reason in pair_map.items():
+        a, b = sorted(list(key))
+        collisions.append({"a": a, "b": b, "reason": reason})
+
+    n = len(ing)
+    pair_count = max(n * (n - 1) // 2, 0)
+    collision_count = len(collisions)
+    duplicate_count = len(duplicates)
+
+    if pair_count > 0:
+        risk_rate = int(((collision_count + duplicate_count) / pair_count) * 100)
+    else:
+        risk_rate = 0
+    
+    # 경고 모음
+    warnings = []
+    for d in duplicates:
+        warnings.append({"type": "[중복 성분]", "ingredient": d, "reason": ""})
+    for c in collisions:
+        warnings.append({"type": "[충돌 성분]", "a": c["a"], "b": c["b"], "reason": c["reason"]})
+
+    return jsonify({
+        "count": n,
+        "pairCount": pair_count,
+        "duplicateCount": duplicate_count,
+        "collisionCount": collision_count,
+        "riskRate": risk_rate,
+        "duplicates": duplicates,
+        "collisions": collisions,
+        "warnings": warnings,
+        "errors": errors,   # 외부 API 실패 항목이 있으면 참고용
+    })
 
 
 if __name__ == '__main__':
