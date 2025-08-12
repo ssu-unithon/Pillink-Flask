@@ -54,6 +54,17 @@ serviceKey = unquote('0zt0FUkd5LMT9nSUvUkxnyXvIkqWli%2Bbk0ulrUNTqhSlAfcMw0a9sMwR
 if serviceKey:
     print(serviceKey)
 
+@app.get("/health")
+def health():
+    return {"ok": True}, 200
+
+
+#루트(확인 용도)
+@app.get("/")
+def home():
+    return "Flask Servre Testing...",200
+
+
 #약 정보
 def get_medicine_info(entpName=None, itemName=None):
     try:
@@ -95,17 +106,6 @@ def get_medicine_info(entpName=None, itemName=None):
     except Exception as e:
         logger.error(f"medicine_info ERROR: {repr(e)}", exc_info=True)
         return None, {"error": "server error", "detail": str(e)}
-
-@app.get("/health")
-def health():
-    return {"ok": True}, 200
-
-
-#루트(확인 용도)
-@app.get("/")
-def home():
-    return "Flask Servre Testing...",200
-
 
 #질문_대답 
 @app.get("/inquiry_answer")
