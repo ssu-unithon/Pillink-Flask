@@ -96,6 +96,8 @@ print(1, 2)
 #QA["answer"] = QA["answer"].fillna("")
 print(1, 3)
 
+QA=list(qa)
+query_emb = embedder.encode(QA, convert_to_numpy=True)
 #질문_대답 
 @app.get("/inquiry_answer")
 def inquiry_answer():
@@ -111,9 +113,7 @@ def inquiry_answer():
         #문장 유사도 평가 모델
         print("2")
         #임베딩
-        query_emb = embedder.encode(QA, convert_to_numpy=True)
         print(2,2)
-        
         corpus_emb = embedder.encode(corpus, convert_to_numpy=True)
         print(2,1)
         
