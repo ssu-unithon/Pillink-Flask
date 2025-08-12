@@ -179,7 +179,7 @@ def medicine_info():
         return jsonify(medicine_result)
     return jsonify(med_err), 500 if "error" in (med_err or {}) else 200
 
-
+'''
 #충돌 성분 조회
 def contrain_ingre(ingredient):
     params = {
@@ -318,7 +318,7 @@ def ingredient_risk():
         "warnings": warnings,
         "errors": errors,   # 외부 API 실패 항목이 있으면 참고용
     })
-
+'''
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
