@@ -366,5 +366,9 @@ print("[LOG] >> 0.0.0.0:5000 flask start")
 
 #localhost
 if __name__ == '__main__':
+    port = 5000
     print(f"[LOG] >> 0.0.0.0:{port} flask start")
-    app.run(host='0.0.0.0', port=port)
+    try:
+        app.run(host='0.0.0.0', port=port)
+    except Exception as e:
+        print("local error")
