@@ -49,6 +49,12 @@ console_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
+print("2")
+#문장 유사도 평가 모델
+model_name = 'jhgan/ko-sbert-sts'
+embedder = SentenceTransformer(model_name)
+print("2-1")
+
 #API 인증키
 serviceKey = unquote('0zt0FUkd5LMT9nSUvUkxnyXvIkqWli%2Bbk0ulrUNTqhSlAfcMw0a9sMwR4FrMOjdwJ8m3%2Bt9HNGzvrMv8nUB6OQ%3D%3D')
 if serviceKey:
@@ -127,12 +133,6 @@ def inquiry_answer():
         QA = pd.read_excel(qa_path)
         QA["question"] = QA["question"].fillna("")
         QA["answer"] = QA["answer"].fillna("")
-
-        print("2")
-        #문장 유사도 평가 모델
-        model_name = 'jhgan/ko-sbert-sts'
-        embedder = SentenceTransformer(model_name)
-        print("2-1")
         
         #임베딩
         corpus_emb = embedder.encode(corpus, convert_to_tensor=True)
