@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import os, traceback
 import pandas as pd
 import numpy as np
@@ -9,6 +10,7 @@ from sentence_transformers import SentenceTransformer, util
 import re
 
 app = Flask(__name__)
+CORS(app)
 
 #파일 위치 확인
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
