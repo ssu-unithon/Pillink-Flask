@@ -361,9 +361,10 @@ def ingredient_risk():
 
 print('complete init')
 
-port = 5001
-print("[LOG] >> 0.0.0.0:5001 flask start")
+port = 5000
+print("[LOG] >> 0.0.0.0:5000 flask start")
 
+#localhost
 if __name__ == '__main__':
     print(f"[LOG] >> 0.0.0.0:{port} flask start")
     app.run(host='0.0.0.0', port=port)
