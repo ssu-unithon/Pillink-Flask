@@ -363,4 +363,4 @@ print('complete init')
 
 port = 5000
 print("[LOG] >> 0.0.0.0:5000 flask start")
-app.run(host='0.0.0.0', port=port)
+app.run(host='127.0.0.1', port=port)
