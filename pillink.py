@@ -49,6 +49,9 @@ console_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
+model_name = 'jhgan/ko-sbert-sts'
+embedder = SentenceTransformer(model_name)
+
 #API 인증키
 serviceKey = unquote('0zt0FUkd5LMT9nSUvUkxnyXvIkqWli%2Bbk0ulrUNTqhSlAfcMw0a9sMwR4FrMOjdwJ8m3%2Bt9HNGzvrMv8nUB6OQ%3D%3D')
 if serviceKey:
@@ -118,21 +121,21 @@ def inquiry_answer():
 
         print("1")
         #질문_대답 파일
+        print('1-1')
         base_dir = os.path.dirname(os.path.abspath(__file__))
         qa_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Question_Answer.xlsx")
+        print('1-2')
         if not os.path.exists(qa_path):
             return jsonify({"error": "QA file 존재하지 않음", "path": qa_path}), 500
         
-        
+        print('1-3')
         QA = pd.read_excel(qa_path)
         QA["question"] = QA["question"].fillna("")
         QA["answer"] = QA["answer"].fillna("")
 
         print("2")
         #문장 유사도 평가 모델
-        model_name = 'jhgan/ko-sbert-sts'
-        embedder = SentenceTransformer(model_name)
-        
+        print("2-1")
         #임베딩
         corpus_emb = embedder.encode(corpus, convert_to_tensor=True)
         query_emb = embedder.encode(QA['question'].tolist(), convert_to_tensor=True)
