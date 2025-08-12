@@ -17,6 +17,11 @@ print("FILE DIR:", BASE_DIR)
 csv_path = os.path.join(BASE_DIR, "medicine_all.csv")
 medicine_all = pd.read_csv(csv_path, encoding="utf-8")
 
+
+model_name = 'jhgan/ko-sbert-sts'
+embedder = SentenceTransformer(model_name)
+print("load embedder")
+
 #API 인증키
 serviceKey = unquote('0zt0FUkd5LMT9nSUvUkxnyXvIkqWli%2Bbk0ulrUNTqhSlAfcMw0a9sMwR4FrMOjdwJ8m3%2Bt9HNGzvrMv8nUB6OQ%3D%3D')
 
@@ -66,7 +71,17 @@ def get_medicine_info(entpName=None, itemName=None):
 def home():
     return "Flask Servre Testing...",200
 
+base_dir = os.path.dirname(os.path.abspath(__file__))
+qa_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Question_Answer.xlsx")
+if not os.path.exists(qa_path):
+    print(jsonify({"error": "QA file 존재하지 않음", "path": qa_path}), 500)
 
+print("1")
+QA = pd.read_excel(qa_path)
+QA["question"] = QA["question"].fillna("")
+QA["answer"] = QA["answer"].fillna("")
+if QA:
+    print(QA['question'])
 #질문_대답 
 @app.get("/inquiry_answer")
 def inquiry_answer():
@@ -77,21 +92,9 @@ def inquiry_answer():
             return jsonify({"error": "문의사항을 입력하세요"}), 400
         print("corpus",corpus)
         #질문_대답 파일
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        qa_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Question_Answer.xlsx")
-        if not os.path.exists(qa_path):
-            return jsonify({"error": "QA file 존재하지 않음", "path": qa_path}), 500
-        
-        print("1")
-        QA = pd.read_excel(qa_path)
-        QA["question"] = QA["question"].fillna("")
-        QA["answer"] = QA["answer"].fillna("")
-        if QA:
-            print(QA['question'])
+       
             
         #문장 유사도 평가 모델
-        model_name = 'jhgan/ko-sbert-sts'
-        embedder = SentenceTransformer(model_name)
         print("2")
         #임베딩
         corpus_emb = embedder.encode(corpus, convert_to_numpy=True)
