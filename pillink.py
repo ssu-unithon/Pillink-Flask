@@ -49,8 +49,16 @@ console_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
+<<<<<<< HEAD
 model_name = 'jhgan/ko-sbert-sts'
 embedder = SentenceTransformer(model_name)
+=======
+print("2")
+#문장 유사도 평가 모델
+model_name = 'jhgan/ko-sbert-sts'
+embedder = SentenceTransformer(model_name)
+print("2-1")
+>>>>>>> b53192731531c4731de3995ff0cb4c8b06f7f03f
 
 #API 인증키
 serviceKey = unquote('0zt0FUkd5LMT9nSUvUkxnyXvIkqWli%2Bbk0ulrUNTqhSlAfcMw0a9sMwR4FrMOjdwJ8m3%2Bt9HNGzvrMv8nUB6OQ%3D%3D')
@@ -136,14 +144,35 @@ def inquiry_answer():
         print("2")
         #문장 유사도 평가 모델
         print("2-1")
+        
         #임베딩
-        corpus_emb = embedder.encode(corpus, convert_to_tensor=True)
-        query_emb = embedder.encode(QA['question'].tolist(), convert_to_tensor=True)
+        #corpus_emb = embedder.encode(corpus, convert_to_tensor=True)
+        #query_emb = embedder.encode(QA['question'].tolist(), convert_to_tensor=True)
 
-        print("3")
+        
         #유사도 계산
-        cos_scores = util.pytorch_cos_sim(query_emb, corpus_emb).cpu().numpy().ravel()
+        #cos_scores = util.pytorch_cos_sim(query_emb, corpus_emb).cpu().numpy().ravel()
 
+        corpus_vec = embedder.encode(
+            [corpus],
+            convert_to_numpy=True,
+            normalize_embeddings=True,  # 코사인 정규화
+            batch_size=1,
+            show_progress_bar=False
+        )[0]
+
+        query_vecs = embedder.encode(
+            QA['question'].tolist(),
+            convert_to_numpy=True,
+            normalize_embeddings=True,  # 코사인 정규화
+            batch_size=16,
+            show_progress_bar=False
+        )
+
+        # 정규화되어 있으니 코사인 유사도 = 내적
+        cos_scores = query_vecs @ corpus_vec
+        print("3")
+        
         #최상위 1개
         best_idx = int(np.argmax(cos_scores))
         best_score = float(cos_scores[best_idx])
