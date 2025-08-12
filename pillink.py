@@ -360,7 +360,7 @@ def ingredient_risk():
     })
 
 print('complete init')
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    print("[LOG] >> 0.0.0.0:5000 flask start")
-    app.run(host='0.0.0.0', port=port)
+
+port = 5000
+print("[LOG] >> 0.0.0.0:5000 flask start")
+app.run(host='0.0.0.0', port=port)
