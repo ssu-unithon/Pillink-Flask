@@ -75,7 +75,7 @@ def inquiry_answer():
         corpus = (request.args.get('corpus') or "").strip()
         if not corpus:
             return jsonify({"error": "문의사항을 입력하세요"}), 400
-
+        print("corpus",corpus)
         #질문_대답 파일
         base_dir = os.path.dirname(os.path.abspath(__file__))
         qa_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Question_Answer.xlsx")
@@ -93,7 +93,9 @@ def inquiry_answer():
         print("2")
         #임베딩
         corpus_emb = embedder.encode(corpus, convert_to_numpy=True)
+        print(2,1)
         query_emb = embedder.encode(QA['question'].tolist(), convert_to_numpy=True)
+        print(2,2)
 
         print("3")
         #유사도 계산
