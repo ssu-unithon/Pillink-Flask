@@ -49,11 +49,23 @@ console_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
+@app.get("/health")
+def health():
+    return {"ok": True}, 200
+
+
+#루트(확인 용도)
+@app.get("/")
+def home():
+    return "Flask Servre Testing...",200
+
+
+
 #API 인증키
 serviceKey = unquote('0zt0FUkd5LMT9nSUvUkxnyXvIkqWli%2Bbk0ulrUNTqhSlAfcMw0a9sMwR4FrMOjdwJ8m3%2Bt9HNGzvrMv8nUB6OQ%3D%3D')
 if serviceKey:
     print(serviceKey)
-
+'''
 #약 정보
 def get_medicine_info(entpName=None, itemName=None):
     try:
@@ -96,17 +108,8 @@ def get_medicine_info(entpName=None, itemName=None):
         logger.error(f"medicine_info ERROR: {repr(e)}", exc_info=True)
         return None, {"error": "server error", "detail": str(e)}
 
-@app.get("/health")
-def health():
-    return {"ok": True}, 200
 
 
-#루트(확인 용도)
-@app.get("/")
-def home():
-    return "Flask Servre Testing...",200
-
-'''
 #질문_대답 
 @app.get("/inquiry_answer")
 def inquiry_answer():
