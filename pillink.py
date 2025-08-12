@@ -106,7 +106,7 @@ def health():
 def home():
     return "Flask Servre Testing...",200
 
-
+'''
 #질문_대답 
 @app.get("/inquiry_answer")
 def inquiry_answer():
@@ -362,7 +362,7 @@ def ingredient_risk():
         "warnings": warnings,
         "errors": errors,   # 외부 API 실패 항목이 있으면 참고용
     })
-
+'''
 print('complete init')
 
 port = 5000
