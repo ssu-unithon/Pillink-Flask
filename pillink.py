@@ -86,7 +86,9 @@ def inquiry_answer():
         QA = pd.read_excel(qa_path)
         QA["question"] = QA["question"].fillna("")
         QA["answer"] = QA["answer"].fillna("")
-
+        if QA:
+            print(QA['question'])
+            
         #문장 유사도 평가 모델
         model_name = 'jhgan/ko-sbert-sts'
         embedder = SentenceTransformer(model_name)
