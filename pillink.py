@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import os, traceback
 import pandas as pd
 import numpy as np
@@ -8,11 +7,8 @@ import requests, json
 from urllib.parse import unquote
 from sentence_transformers import SentenceTransformer, util
 import re
-import logging
-from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
-CORS(app)
 
 #파일 위치 확인
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -20,59 +16,14 @@ print("CWD:", os.getcwd())
 print("FILE DIR:", BASE_DIR)
 csv_path = os.path.join(BASE_DIR, "medicine_all.csv")
 medicine_all = pd.read_csv(csv_path, encoding="utf-8")
-log_path = os.path.join(BASE_DIR, "app.log")
-
-# 로거 설정
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)  # DEBUG, INFO, WARNING, ERROR, CRITICAL
-if logger:
-    print("logger 설정")
-
-# 파일 핸들러 (10MB 이상이면 백업하고 새 파일 생성, 최대 5개 유지)
-file_handler = RotatingFileHandler(log_path, maxBytes=10*1024*1024, backupCount=5, encoding='utf-8')
-file_handler.setLevel(logging.DEBUG)
-if file_handler:
-    print("handler 존재함")
-
-# 콘솔 핸들러
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.DEBUG)
-if console_handler:
-    print("console_handler 설정됨")
-
-# 로그 포맷
-formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
-file_handler.setFormatter(formatter)
-console_handler.setFormatter(formatter)
-
-# 핸들러 등록
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)
-
-model_name = 'jhgan/ko-sbert-sts'
-embedder = SentenceTransformer(model_name)
 
 #API 인증키
 serviceKey = unquote('0zt0FUkd5LMT9nSUvUkxnyXvIkqWli%2Bbk0ulrUNTqhSlAfcMw0a9sMwR4FrMOjdwJ8m3%2Bt9HNGzvrMv8nUB6OQ%3D%3D')
-if serviceKey:
-    print(serviceKey)
-
-@app.get("/health")
-def health():
-    return {"ok": True}, 200
-
-
-#루트(확인 용도)
-@app.get("/")
-def home():
-    return "Flask Servre Testing...",200
-
 
 #약 정보
 def get_medicine_info(entpName=None, itemName=None):
     try:
         if not entpName and not itemName:
-            logger.warning("업체명과 제품명이 입력되지 않음")
             return None, {"error": "업체명과 제품명을 입력해주세요"}
 
         url = 'http://apis.data.go.kr/1471000/DrbEasyDrugInfoService/getDrbEasyDrugList'
@@ -90,7 +41,6 @@ def get_medicine_info(entpName=None, itemName=None):
         items = (payload.get('body') or {}).get('items') or []
 
         if not items:
-            logger.info(f"검색 결과 없음: entpName={entpName}, itemName={itemName}")
             return None, {"message": "검색 결과가 없습니다."}
 
         item = items[0]
@@ -102,13 +52,20 @@ def get_medicine_info(entpName=None, itemName=None):
             '부작용': item.get('seQesitm'),
             '보관법': item.get('depositMethodQesitm')
         }
-        logger.debug(f"약 정보 조회 성공:{result}")
         return result,None
 
     #예외 처리 
     except Exception as e:
-        logger.error(f"medicine_info ERROR: {repr(e)}", exc_info=True)
+        print("medicine_info ERROR:", repr(e))
+        traceback.print_exc()
         return None, {"error": "server error", "detail": str(e)}
+
+
+#루트(확인 용도)
+@app.get("/")
+def home():
+    return "Flask Servre Testing...",200
+
 
 #질문_대답 
 @app.get("/inquiry_answer")
@@ -119,61 +76,34 @@ def inquiry_answer():
         if not corpus:
             return jsonify({"error": "문의사항을 입력하세요"}), 400
 
-        print("1")
         #질문_대답 파일
-        print('1-1')
         base_dir = os.path.dirname(os.path.abspath(__file__))
         qa_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Question_Answer.xlsx")
-        print('1-2')
         if not os.path.exists(qa_path):
             return jsonify({"error": "QA file 존재하지 않음", "path": qa_path}), 500
         
-        print('1-3')
+        print("1")
         QA = pd.read_excel(qa_path)
         QA["question"] = QA["question"].fillna("")
         QA["answer"] = QA["answer"].fillna("")
 
-        print("2")
         #문장 유사도 평가 모델
-        print("2-1")
-        
+        model_name = 'jhgan/ko-sbert-sts'
+        embedder = SentenceTransformer(model_name)
+        print("2")
         #임베딩
-        #corpus_emb = embedder.encode(corpus, convert_to_tensor=True)
-        #query_emb = embedder.encode(QA['question'].tolist(), convert_to_tensor=True)
-
         corpus_emb = embedder.encode(corpus, convert_to_numpy=True)
         query_emb = embedder.encode(QA['question'].tolist(), convert_to_numpy=True)
 
-
-        #유사도 계산
-        #cos_scores = util.pytorch_cos_sim(query_emb, corpus_emb).cpu().numpy().ravel()
-        '''
-        corpus_vec = embedder.encode(
-            [corpus],
-            convert_to_numpy=True,
-            normalize_embeddings=True,  
-            batch_size=1,
-            show_progress_bar=False
-        )[0]
-
-        query_vecs = embedder.encode(
-            QA['question'].tolist(),
-            convert_to_numpy=True,
-            normalize_embeddings=True,  
-            batch_size=16,
-            show_progress_bar=False
-        )
-'''
-        # 정규화되어 있으니 코사인 유사도 = 내적
-        cos_scores = query_vecs @ corpus_vec
-        
         print("3")
+        #유사도 계산
+        cos_scores = util.pytorch_cos_sim(query_emb, corpus_emb).cpu().numpy().ravel()
+        print("4")
         
         #최상위 1개
         best_idx = int(np.argmax(cos_scores))
         best_score = float(cos_scores[best_idx])
 
-        print("4")
         #유사도가 너무 낮은 경우 결과 없음 처리
         if best_score <= 0.35:
             return jsonify({"result": "결과 없음", "score": best_score})
@@ -184,7 +114,6 @@ def inquiry_answer():
             "score": best_score
         }
 
-        print("5")
         #약 정보 요구
         if best_idx in [7,8,9]:
             response['answer']=""
@@ -211,20 +140,16 @@ def inquiry_answer():
                 if not removed:
                     clean_tokens.append(t)
 
-            print(clean_tokens,flush=True)
-            print("6")
-            
+            #print(clean_tokens)
             find_medi = []
             for token in clean_tokens:
                 find_medi.extend([name for name in medicine_all['itemName'] if token in name])
             #find_medi = list(set(find_medi)) #최종 약물 단어 추출
-
-            print(find_medi,flush=True)
+        
             if find_medi[0]:
                 itemName=find_medi[0]
             
-            itemName=clean_tokens[0]
-            print("itemName", itemName,flush=True)
+            #print("itemName", itemName)
             medicine_result, err = get_medicine_info(entpName,itemName)
             if medicine_result:
                 if best_idx == 7:
@@ -278,19 +203,20 @@ def contrain_ingre(ingredient):
     except Exception as e:
         return [], {"error": f"API 요청 실패"}
 
-    body = (result or {}).get("body") or {}
+    body = (j or {}).get("body") or {}
     items = body.get("items")
     if items is None:
         items = body.get("item")  # 어떤 응답은 item만 있음
 
     flat = []
+    
     if isinstance(items, list):
         for it in items:
             if isinstance(it, dict) and isinstance(it.get("item"), dict):
                 flat.append(it["item"])
             elif isinstance(it, dict):
                 flat.append(it)
-    # case 2) items: dict
+    
     elif isinstance(items, dict):
         if isinstance(items.get("item"), list):
             for it in items["item"]:
@@ -316,7 +242,7 @@ def contrain_ingre(ingredient):
     return cleaned, None
 
 
-#중복 성분, 충돌 성분, 위험치 지수
+
 @app.post('/ingredient_risk')
 def ingredient_risk():
     data = request.get_json(silent=True) or {}  #Body 추출
@@ -397,16 +323,6 @@ def ingredient_risk():
         "errors": errors,   # 외부 API 실패 항목이 있으면 참고용
     })
 
-print('complete init')
 
-port = 8000
-print("[LOG] >> 0.0.0.0:5000 flask start")
-
-#localhost
 if __name__ == '__main__':
-    port = 5000
-    print(f"[LOG] >> 0.0.0.0:{port} flask start")
-    try:
-        app.run(host='0.0.0.0', port=port)
-    except Exception as e:
-        print("local error")
+    app.run(host='0.0.0.0', port=3000, debug=True)
