@@ -79,9 +79,11 @@ if not os.path.exists(qa_path):
 print("1")
 QA = pd.read_excel(qa_path)
 QA["question"] = QA["question"].fillna("")
+print(1, 2)
 QA["answer"] = QA["answer"].fillna("")
-if QA:
-    print(QA['question'])
+
+print(1, 3)
+
 #질문_대답 
 @app.get("/inquiry_answer")
 def inquiry_answer():
