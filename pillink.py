@@ -14,8 +14,8 @@ app = Flask(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 print("CWD:", os.getcwd())
 print("FILE DIR:", BASE_DIR)
-csv_path = os.path.join(BASE_DIR, "medicine_all.csv")
-medicine_all = pd.read_csv(csv_path, encoding="utf-8")
+#csv_path = os.path.join(BASE_DIR, "medicine_all.csv")
+#medicine_all = pd.read_csv(csv_path, encoding="utf-8")
 
 #API 인증키
 serviceKey = unquote('0zt0FUkd5LMT9nSUvUkxnyXvIkqWli%2Bbk0ulrUNTqhSlAfcMw0a9sMwR4FrMOjdwJ8m3%2Bt9HNGzvrMv8nUB6OQ%3D%3D')
