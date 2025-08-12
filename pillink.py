@@ -49,16 +49,8 @@ console_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
-<<<<<<< HEAD
 model_name = 'jhgan/ko-sbert-sts'
 embedder = SentenceTransformer(model_name)
-=======
-print("2")
-#문장 유사도 평가 모델
-model_name = 'jhgan/ko-sbert-sts'
-embedder = SentenceTransformer(model_name)
-print("2-1")
->>>>>>> b53192731531c4731de3995ff0cb4c8b06f7f03f
 
 #API 인증키
 serviceKey = unquote('0zt0FUkd5LMT9nSUvUkxnyXvIkqWli%2Bbk0ulrUNTqhSlAfcMw0a9sMwR4FrMOjdwJ8m3%2Bt9HNGzvrMv8nUB6OQ%3D%3D')
@@ -156,7 +148,7 @@ def inquiry_answer():
         corpus_vec = embedder.encode(
             [corpus],
             convert_to_numpy=True,
-            normalize_embeddings=True,  # 코사인 정규화
+            normalize_embeddings=True,  
             batch_size=1,
             show_progress_bar=False
         )[0]
@@ -164,7 +156,7 @@ def inquiry_answer():
         query_vecs = embedder.encode(
             QA['question'].tolist(),
             convert_to_numpy=True,
-            normalize_embeddings=True,  # 코사인 정규화
+            normalize_embeddings=True,  
             batch_size=16,
             show_progress_bar=False
         )
