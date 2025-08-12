@@ -116,16 +116,19 @@ def inquiry_answer():
         if not corpus:
             return jsonify({"error": "문의사항을 입력하세요"}), 400
 
+        print("1")
         #질문_대답 파일
         base_dir = os.path.dirname(os.path.abspath(__file__))
         qa_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Question_Answer.xlsx")
         if not os.path.exists(qa_path):
             return jsonify({"error": "QA file 존재하지 않음", "path": qa_path}), 500
         
+        
         QA = pd.read_excel(qa_path)
         QA["question"] = QA["question"].fillna("")
         QA["answer"] = QA["answer"].fillna("")
 
+        print("2")
         #문장 유사도 평가 모델
         model_name = 'jhgan/ko-sbert-sts'
         embedder = SentenceTransformer(model_name)
@@ -134,6 +137,7 @@ def inquiry_answer():
         corpus_emb = embedder.encode(corpus, convert_to_tensor=True)
         query_emb = embedder.encode(QA['question'].tolist(), convert_to_tensor=True)
 
+        print("3")
         #유사도 계산
         cos_scores = util.pytorch_cos_sim(query_emb, corpus_emb).cpu().numpy().ravel()
 
@@ -141,6 +145,7 @@ def inquiry_answer():
         best_idx = int(np.argmax(cos_scores))
         best_score = float(cos_scores[best_idx])
 
+        print("4")
         #유사도가 너무 낮은 경우 결과 없음 처리
         if best_score <= 0.35:
             return jsonify({"result": "결과 없음", "score": best_score})
@@ -151,6 +156,7 @@ def inquiry_answer():
             "score": best_score
         }
 
+        print("5")
         #약 정보 요구
         if best_idx in [7,8,9]:
             response['answer']=""
@@ -178,7 +184,7 @@ def inquiry_answer():
                     clean_tokens.append(t)
 
             print(clean_tokens,flush=True)
-            
+            print("6")
             
             find_medi = []
             for token in clean_tokens:

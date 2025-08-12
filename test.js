@@ -16,7 +16,7 @@ axios
     }
   });
 */
-
+/*
 axios
   .get("http://127.0.0.1:5000/inquiry_answer", {
     params: {
@@ -36,10 +36,9 @@ axios
       console.error("에러:", err.message);
     }
   });
+*/
 
 /*
-const axios = require("axios");
-
 axios
   .post("http://127.0.0.1:5000/ingredient_risk", {
     ingredients: ["메토트렉세이트", "아스피린", "아스피린"],
@@ -54,3 +53,19 @@ axios
     }
   });
 */
+axios
+  .post(
+    "https://port-0-pillink-flask-me70nmhbc3886b97.sel5.cloudtype.app/ingredient_risk",
+    {
+      ingredients: ["메토트렉세이트", "아스피린", "아스피린"],
+    }
+  )
+  .then((res) => console.log("응답:", res.data))
+  .catch((err) => {
+    if (err.response) {
+      console.error("상태:", err.response.status);
+      console.error("바디:", err.response.data);
+    } else {
+      console.error("에러:", err.message);
+    }
+  });
