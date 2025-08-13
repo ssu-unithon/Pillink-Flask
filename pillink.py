@@ -228,7 +228,7 @@ def contrain_ingre(ingredient):
     except Exception as e:
         return [], {"error": f"API 요청 실패"}
 
-    body = (j or {}).get("body") or {}
+    body = (result or {}).get("body") or {}
     items = body.get("items")
     if items is None:
         items = body.get("item")  # 어떤 응답은 item만 있음
